@@ -170,3 +170,146 @@ Welcome! Please enter the name: Manoj
 Hello and welcome Manoj
 ```
 The `-t` flag stands for **pseudo-terminal**. With the combination `-it`, we are attached to the terminal in **interactive mode** — now both the prompt and input work correctly.
+
+---
+
+## Port Mapping
+
+### The Problem
+```bash
+docker run simple-web-app
+```
+```
+Running on http://0.0.0.0:5000
+```
+
+The container runs on port **5000** and has an internal IP like `172.17.0.2`. This IP is only accessible **within the Docker host**. Users outside cannot access the application.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  DOCKER HOST (192.168.1.5)                                      │
+│                                                                 │
+│    ┌─────────────────────┐                                      │
+│    │  Container          │                                      │
+│    │  IP: 172.17.0.2     │    ← Only accessible inside host     │
+│    │  Port: 5000         │                                      │
+│    └─────────────────────┘                                      │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+        ↑
+        ✗ External users CANNOT access 172.17.0.2:5000
+```
+
+### The Solution: Port Mapping
+```bash
+docker run -p 80:5000 simple-web-app
+```
+
+Map a port on the **Docker host** to a port on the **container**:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  DOCKER HOST (192.168.1.5)                                      │
+│                                                                 │
+│    Port 80 ──────────────────┐                                  │
+│                              │                                  │
+│                              ▼                                  │
+│                    ┌─────────────────────┐                      │
+│                    │  Container          │                      │
+│                    │  IP: 172.17.0.2     │                      │
+│                    │  Port: 5000         │                      │
+│                    └─────────────────────┘                      │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+        ↑
+        ✓ External users access http://192.168.1.5:80
+```
+
+### Syntax
+```bash
+docker run -p <host_port>:<container_port> <image>
+```
+
+### Multiple Port Mappings
+You can map multiple ports to different containers:
+```bash
+docker run -p 80:5000 webapp1
+docker run -p 8080:5000 webapp2
+docker run -p 3306:3306 mysql
+```
+
+> ⚠️ **Note:** You cannot map the **same host port** more than once.
+
+---
+
+## Volume Mapping (Data Persistence)
+
+### The Problem
+```bash
+docker run mysql
+```
+
+Data inside the container (e.g., `/var/lib/mysql`) is stored **inside the container**. If the container is deleted, **all data is lost**.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  DOCKER HOST                                                    │
+│                                                                 │
+│    ┌─────────────────────┐                                      │
+│    │  MySQL Container    │                                      │
+│    │                     │                                      │
+│    │  /var/lib/mysql ────┼──── Data lives HERE (inside)         │
+│    │                     │                                      │
+│    └─────────────────────┘                                      │
+│              ↓                                                  │
+│         Container deleted = Data GONE! ✗                        │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### The Solution: Volume Mapping
+```bash
+docker run -v /opt/datadir:/var/lib/mysql mysql
+```
+
+Map a directory on the **host** to a directory inside the **container**:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  DOCKER HOST                                                    │
+│                                                                 │
+│    /opt/datadir ◄────────────────────┐                          │
+│    (Data persists here!) ✓           │ Volume Mount             |
+│                                      │                          │
+│    ┌─────────────────────┐           │                          │
+│    │  MySQL Container    │           │                          │
+│    │                     │           │                          │
+│    │  /var/lib/mysql ────┼───────────┘                          │
+│    │                     │                                      │
+│    └─────────────────────┘                                      │
+│              ↓                                                  │
+│         Container deleted = Data SAFE! ✓                        │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Syntax
+```bash
+docker run -v <host_path>:<container_path> <image>
+```
+
+---
+
+## Inspecting Containers
+
+### `docker inspect`
+```bash
+docker inspect "container_name"
+```
+Returns detailed configuration and state information about a container in **JSON format** (network settings, mounts, environment variables, etc.).
+
+### `docker logs`
+```bash
+docker logs "container_name"
+```
+Displays the **logs** (stdout/stderr output) of a container.
