@@ -89,3 +89,84 @@ As soon as this command is executed, it runs the Ubuntu image and executes the c
 docker exec "container_name" cat /etc/hosts
 ```
 Runs a command inside a **running** container. Useful for debugging or inspecting container state.
+
+---
+
+## Attached & Detached Modes
+
+### Attached Mode (Default)
+```bash
+docker run "image_name"
+```
+This will simply run the image. For example, if you start a web server, once you execute the command it will run the instance of the image and you will **not** get the prompt back to type the next command unless you press `Ctrl+C`. This is running in **attached mode**.
+
+### Detached Mode
+```bash
+docker run -d "image_name"
+```
+Runs the instance of the image in **detached mode** (in the background). This will print out the container ID and return the prompt immediately.
+
+### Re-attaching to a Container
+```bash
+docker attach "container_id"
+```
+You can later re-attach to a running container using the container ID. You only need the **first 3 characters** of the container ID to identify it.
+
+---
+
+## Image Tags (Versions)
+
+### Running a Specific Version
+```bash
+docker run nginx
+```
+This will run the **latest** version of the image by default.
+
+```bash
+docker run nginx:1.1.4
+```
+To run a specific version, use the **tag** concept. You can find available tags (latest, oldest, or specific versions) for any image on [Docker Hub](https://hub.docker.com).
+
+---
+
+## Interactive Mode
+
+### Understanding the Problem
+
+If we run an application locally that requires user input:
+```bash
+./app.sh
+```
+```
+Welcome! Please enter the name: Manoj
+Hello and welcome Manoj
+```
+
+### Non-Interactive Mode (Default)
+```bash
+docker run simple-prompt-application
+```
+```
+Hello and welcome
+```
+The prompt is **missing** and the user cannot input anything. By default, Docker does not listen to any input — even though the container is attached to the console, it doesn't have a terminal to read from. This is **non-interactive mode**.
+
+### Interactive Mode (`-i`)
+```bash
+docker run -i simple-prompt-application
+```
+```
+Manoj
+Hello and welcome Manoj
+```
+The `-i` flag enables **interactive mode** (keeps STDIN open). Now you can type input, but the prompt is still missing because the application's prompt isn't displayed — we haven't attached to the container's terminal yet.
+
+### Interactive Mode with Terminal (`-it`)
+```bash
+docker run -it simple-prompt-application
+```
+```
+Welcome! Please enter the name: Manoj
+Hello and welcome Manoj
+```
+The `-t` flag stands for **pseudo-terminal**. With the combination `-it`, we are attached to the terminal in **interactive mode** — now both the prompt and input work correctly.
